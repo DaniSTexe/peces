@@ -85,7 +85,7 @@ for i0 in range(Nframes):
         Actual = limpiadorOrdenador(Actual)
         i1=+1
 
-
+    
     #Y_line posicion
     if y_line > Actual[-1]['y']:
         conteo_saltos_linea =+1 
@@ -125,10 +125,10 @@ for i0 in range(Nframes):
     print(f' Anterior: {Anterior}')
     print(f' Actual: {Actual}')
 
-    print(f'punto A {puntoA}')
-    print(f'punto B {puntoB}')
-    print(f'y line {y_line}')
-    print(f'salto linea {is_salto_linea}')
+    #print(f'punto A {puntoA}')
+    #print(f'punto B {puntoB}')
+    #print(f'y line {y_line}')
+    #print(f'salto linea {is_salto_linea}')
 
     #Reset
     viejos_ids = nuevos_ids

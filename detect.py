@@ -87,11 +87,29 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         source = check_file(source)  # download
 
     #variables iniciales
-    paso = 0
-    frame = 0
-    identidad = 0
-    Frame_arrays = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
     y_line = 0.75
+    Anterior = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')])
+    Actual = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')])
+    identidad = 0
+    anteriorIdentificado = False
+    conteo_saltos_linea = 0
+    is_salto_linea = False
+    nuevos_ids = []
+    viejos_ids = []
+
+    def limpiadorOrdenador (Frame_arrays):
+        Arrays_no_valids = ([-1])
+        for i in range(len(Frame_arrays)):
+            if Frame_arrays[i]['valid'] == -1:
+                Arrays_no_valids.append(i)
+                
+        Frame_arrays_clean = np.delete(Frame_arrays,Arrays_no_valids[1:])
+        menor_mayor = np.sort(Frame_arrays_clean, order='y')
+        mayor_menor = menor_mayor[::-1]
+        Arrays_no_valids = ([-1])
+        return mayor_menor
+    
+    Anterior = limpiadorOrdenador(Anterior)
 
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
@@ -180,17 +198,11 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
 
+                    #Paso reference
                     # Se crea un array dtype con las coordernadas xwyh y se agrega un id y un valid que nos dirá si efectivamente es un array valido o es el configurado por defecto para cuando no hay arrays (1 valido, -1 no valido)
                     out_Yolo = np.array([(xywh[0],xywh[1],xywh[2],xywh[3],-1,1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
-                    
-                    Frame_arrays = np.append(Frame_arrays, out_Yolo, axis=0)
-                    
-
+                    Actual = np.append(Actual, out_Yolo, axis=0) 
                     #print(out_Yolo)
-
-                    #Paso reference
-                    paso=paso+1
-                    #print(f'Paso {paso}')
 
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
@@ -200,44 +212,62 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
             
             #Frame reference #recordar que pasa primero por aca antes de iniciar correctamente
-            frame = frame+1
-            identidad = identidad+1
-            #print(f'Frame {frame}')
+            Actual = limpiadorOrdenador(Actual)
 
-            #-------------------------------------------------------------------------------------------------------------
-            #---------------------------------------------Limpiar el frame ----------------------------------------------
-            #Estamos limpiando el frame de los valores no validos (Valores de iniciación) y solo tenemos los valores asignados por el yolo
-            Arrays_no_valids = ([-1])                       #Se inicializa la variable donde se va a guardar los indices de los vectores no validos del frame_array
-            for ir in range(len(Frame_arrays)):             
-                if Frame_arrays[ir]['valid'] == -1:
-                    Arrays_no_valids.append(ir)
+            #Y_line posicion
+            #Cambiar un try por si el array esta vacio
+            try:
+                if y_line > Actual[-1]['y']:
+                    conteo_saltos_linea =+1 
+                    puntoA = Actual[-1]['y'] 
+                    puntoB = y_line
+                    is_salto_linea = True
 
-            Frame_arrays_clean = np.delete(Frame_arrays,Arrays_no_valids[1:]) #Se borran los vectores en los indices hallados en el codigo anterior, se inicia desde 1 porque la posicion 0 es el "-1" de inicialización
-            Arrays_no_valids = ([-1]) #Se reestablece el vector de indices a borrar para el siguiente frame
-            #print(Frame_arrays_clean)
-            #------------------------------------------------------------------------------------------------------------
-            #------------------------------------------------------------------------------------------------------------
+                y_line = Actual[-1]['y']
+                
+                if Actual[0]['y'] > 0.75 and is_salto_linea == False:
+                    y_line = 0.75
+
+                if is_salto_linea:
+                    #Identificador, encargado de colocar los IDs en cada frame:
+                    if Actual.size != 0:
+                        for i1 in range(len(Actual)):
+                            if Actual[i1]['id'] == -1:
+                                if (Actual[i1]['y']<puntoB) and ((Actual[i1]['y'])>=puntoA):
+                                    identidad+=1
+                                    Actual[i1]['id'] = identidad
+                                    nuevos_ids.append(identidad)
+                                else:
+                                    Actual[i1]['id'] = viejos_ids[i1]
+
+                
+                else:
+                    #Recordador de IDs, recuerda los peces que ya tienen ID Version 2.0, Falta actualizar
+                    for i2 in range(len(Actual)):
+                        Actual[i2]['id'] = identidad-len(Actual)+1+i2
 
 
-            #------------------------------------------------------------------------------------------------------------
-            #---------------------------------------------Ordenar el frame-----------------------------------------------
-            ordenado_array = np.sort(Frame_arrays_clean, order='y')
-            reverse_array = ordenado_array[::-1]
-            print(reverse_array)
-            #------------------------------------------------------------------------------------------------------------
-            #------------------------------------------------------------------------------------------------------------
+                print(f' Anterior: {Anterior}')
+                print(f' Actual: {Actual}')
 
-            #------------------------------------------------------------------------------------------------------------
-            #---------------------------------------------Logica de la linea---------------------------------------------
-            if ordenado_array.size != 0:
-                if ordenado_array[0]['id'] != -1:
-                    pass
-            #------------------------------------------------------------------------------------------------------------
-            #------------------------------------------------------------------------------------------------------------
+                print(f'punto A {puntoA}')
+                print(f'punto B {puntoB}')
+                print(f'y line {y_line}')
+                print(f'salto linea {is_salto_linea}')
+
+                #Reset frame config
+                viejos_ids = nuevos_ids
+                nuevos_ids = []
+                Anterior = Actual 
+                Actual = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
+                i0 =+ 1
+                is_salto_linea = False
+                print(f"Conteo: {identidad}")
+            except:
+                print("NO PASS")
+                pass
 
 
-            #Reinicia el frame_arrays para que pueda guardar el siguiente frame
-            Frame_arrays = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
 
             # Print time (inference-only)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
