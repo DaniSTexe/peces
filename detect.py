@@ -87,16 +87,17 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         source = check_file(source)  # download
 
     #variables iniciales
-    y_line = 0.75
     Anterior = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')])
     Actual = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')])
-    identidad = 0
-    anteriorIdentificado = False
-    conteo_saltos_linea = 0
-    is_salto_linea = False
-    nuevos_ids = []
-    viejos_ids = []
+    y_min = 0.75
+    pez_nuevo = 0
+    peces_franja_nuevos = 0
+    Conteo_frame = 0
+    identidad = []
+    Inverso_identidad = []
+    Conteo_total=0
 
+    #Funcion para eliminar los valores que son de inicialización y para ordenar el frame desde el ymayor hasta el ymenor (inferior-superior)
     def limpiadorOrdenador (Frame_arrays):
         Arrays_no_valids = ([-1])
         for i in range(len(Frame_arrays)):
@@ -104,10 +105,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 Arrays_no_valids.append(i)
                 
         Frame_arrays_clean = np.delete(Frame_arrays,Arrays_no_valids[1:])
-        menor_mayor = np.sort(Frame_arrays_clean, order='y')
-        mayor_menor = menor_mayor[::-1]
+        inferior_superior = np.sort(Frame_arrays_clean, order='y')
         Arrays_no_valids = ([-1])
-        return mayor_menor
+        return inferior_superior
     
     Anterior = limpiadorOrdenador(Anterior)
 
@@ -202,72 +202,70 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     # Se crea un array dtype con las coordernadas xwyh y se agrega un id y un valid que nos dirá si efectivamente es un array valido o es el configurado por defecto para cuando no hay arrays (1 valido, -1 no valido)
                     out_Yolo = np.array([(xywh[0],xywh[1],xywh[2],xywh[3],-1,1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
                     Actual = np.append(Actual, out_Yolo, axis=0) 
-                    #print(out_Yolo)
 
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
-                        label = None if hide_labels else (names[c] if hide_conf else f'{identidad} {names[c]} {conf:.2f}')
+                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
                         annotator.box_label(xyxy, label, color=colors(c, True))
                         if save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
             
             #Frame reference #recordar que pasa primero por aca antes de iniciar correctamente
             Actual = limpiadorOrdenador(Actual)
-
-            #Y_line posicion
-            #Cambiar un try por si el array esta vacio
-            try:
-                if y_line > Actual[-1]['y']:
-                    conteo_saltos_linea =+1 
-                    puntoA = Actual[-1]['y'] 
-                    puntoB = y_line
-                    is_salto_linea = True
-
-                y_line = Actual[-1]['y']
+            #print(f'Anctual inicio {Actual}')
+            #print(f'y_min {y_min}')
+            
+            if len(Actual) != 0:
+                #Si hay un pez del frame actual mas arriba que la linea de referencia en el frame anterior
+                if Actual[0]['y'] < y_min:
+                    pez_nuevo += 1
                 
-                if Actual[0]['y'] > 0.75 and is_salto_linea == False:
-                    y_line = 0.75
+                #Peces en la franja entre el pez_arriba y y_min
+                for i1 in range(len(Actual)):
+                    if Actual[i1]['y'] < Actual[0]['y']:
+                        if Actual[i1]['y'] > y_min:
+                            peces_franja_nuevos =+ 1
+                
+                Conteo_frame = pez_nuevo+ peces_franja_nuevos
+                Conteo_total = Conteo_total+Conteo_frame
 
-                if is_salto_linea:
-                    #Identificador, encargado de colocar los IDs en cada frame:
-                    if Actual.size != 0:
-                        for i1 in range(len(Actual)):
-                            if Actual[i1]['id'] == -1:
-                                if (Actual[i1]['y']<puntoB) and ((Actual[i1]['y'])>=puntoA):
-                                    identidad+=1
-                                    Actual[i1]['id'] = identidad
-                                    nuevos_ids.append(identidad)
-                                else:
-                                    Actual[i1]['id'] = viejos_ids[i1]
+                #print(f'Peces nuevos: {pez_nuevo}')
+                #print(f'Peces franja: {peces_franja_nuevos}')
+                #print(f'Conteo_frame: {Conteo_frame}')
 
                 
+                #Agregamos los peces nuevos a el vector identidad
+                for i2 in range(1,Conteo_frame+1):
+                    identidad.append(len(identidad)+i2)
+
+                #Asignación de ID
+                Inverso_identidad = identidad[::-1]
+
+                #print(f'Inverso_identidad{Inverso_identidad}')
+
+                #Barrer peces desde el pez_superior hasta el pez_inferior = inverso_identidad[i]
+                for i3 in range(0, len(Inverso_identidad)):
+                    #ESTE TRY SE PONE PROVISIONALMENTE PARA EVITAR CUANDO SALE UN PEZ DE LA IMAGEN QUE QUEDE UN PEZ DE MAS EN ACTUAL QUE EN IDENTIDAD
+                    try:
+                        Actual[i3]['id'] = Inverso_identidad[i3]
+                    except:
+                        pass
+
+                #Asignación de y_min=0.75 cuando el pez_superior esta muy abajo
+                if Actual[0]['y'] > 0.75:
+                    y_min = 0.75
                 else:
-                    #Recordador de IDs, recuerda los peces que ya tienen ID Version 2.0, Falta actualizar
-                    for i2 in range(len(Actual)):
-                        Actual[i2]['id'] = identidad-len(Actual)+1+i2
+                    y_min = Actual[0]['y']
 
+            #print(f'Actual final {Actual}')
 
-                print(f' Anterior: {Anterior}')
-                print(f' Actual: {Actual}')
-
-                print(f'punto A {puntoA}')
-                print(f'punto B {puntoB}')
-                print(f'y line {y_line}')
-                print(f'salto linea {is_salto_linea}')
-
-                #Reset frame config
-                viejos_ids = nuevos_ids
-                nuevos_ids = []
-                Anterior = Actual 
-                Actual = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
-                i0 =+ 1
-                is_salto_linea = False
-                print(f"Conteo: {identidad}")
-            except:
-                print("NO PASS")
-                pass
-
-
+            #Reset frame config
+            Anterior = Actual 
+            Actual = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
+            pez_nuevo = 0
+            peces_franja_nuevos = 0
+            Conteo_frame = 0
+            print(f'CONTEO: {Conteo_total}')
 
             # Print time (inference-only)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
