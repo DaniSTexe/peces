@@ -215,6 +215,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             #print(f'Anctual inicio {Actual}')
             #print(f'y_min {y_min}')
             
+            
             if len(Actual) != 0:
                 #Si hay un pez del frame actual mas arriba que la linea de referencia en el frame anterior
                 if Actual[0]['y'] < y_min:
