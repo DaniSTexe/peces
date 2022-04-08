@@ -33,6 +33,9 @@ Tres detecciones por frame en 2 frames y,N,Nframes = [(0.1,0.1,0.1),(0.2,0.2,0.2
 #situacion 3: Pasada la situacion 0 entran N peces (N=4)
 y, N, Nframes =[(0.10),(0.12,0.08,0.05,0.04)],(1,4),2
 
+#situacion especial
+y, N, Nframes =[(),(0.1)],(0,1),2
+
 #Main
 y_line = 0.75
 

@@ -260,6 +260,26 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
             #print(f'Actual final {Actual}')
 
+            #parte visual del contador
+            # font
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            
+            # org
+            org = (50, 50)
+            
+            # fontScale
+            fontScale = 1
+            
+            # Blue color in BGR
+            color = (0, 0, 255)
+            
+            # Line thickness of 2 px
+            thickness = 4
+            
+            # Using cv2.putText() method
+            im0 = cv2.putText(im0, f'Conteo: {Conteo_total}', org, font, 
+                            fontScale, color, thickness, cv2.LINE_AA)
+
             #Reset frame config
             Anterior = Actual 
             Actual = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
