@@ -228,8 +228,8 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                         if Anterior[i3]['y'] >= Actual[i4]['y']:
                             ActualVacio = np.delete(ActualVacio,i4)
                             pezNuevo += 1
-                    else:
-                        break
+                        else:
+                            break
                 else:
                     try:
                         ActualVacio = np.delete(ActualVacio,i3)
@@ -309,8 +309,8 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / './weights/colas1.pt', help='model path(s)')
-    parser.add_argument('--source', type=str, default=ROOT / './Inputs/Conteo_32', help='file/dir/URL/glob, 0 for webcam')
+    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / './weights/circulo.pt', help='model path(s)')
+    parser.add_argument('--source', type=str, default=ROOT / './Inputs/50.mkv', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')

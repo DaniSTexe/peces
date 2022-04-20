@@ -2,36 +2,17 @@ import numpy as np
 
 """
 Parametros
+x: Posiciones en y de las detecciones en yolo. 
 y: Posiciones en y de las detecciones en yolo. 
 N: Numero de detecciones por frame.
-Nframes: Numero de frames de la simulacion. (Sin contar el anterior), Es decir Nframes = 1 tendra el anterior y el nuevo, Nframes = 2 tendra el anterior y dos nuevos.
+Nframes: Numero de frames de la simulacion. 
 
-Ejemplos:
-Una detección en un frame y,N,Nframes = 0.1,1,1 
-
-Dos detecciones en un frame y,N,Nframes = (0.1,0.2),2,1 
-
-Una detección en dos frames y,N,Nframes = [(0.1),(0.2)],(1,1),2
-
-Tres detecciones por frame en 2 frames y,N,Nframes = [(0.1,0.1,0.1),(0.2,0.2,0.2)], (3,3), 2
+Ejemplo:
+#Tendremos 5 frames,los peces en cada frame seran (1,2,2,3,3) respectivamente, el pez del frame 1 estara en la posicion (0.15,0.2) y asi...
+x=[(0.15),(0.15,0.23),(0.15,0.23),(0.15,0.23,0.81),(0.23,0.81,0.52)]
+y=[(0.2),(0.3,0.1),(0.7,0.5),(0.9,0.7,0.1),(0.91,0.2,0.1)]
+N, Nframes =[(1,2,2,3,3),5]
 """
-
-#Situaciones posibles:
-
-#situacion 0: Entra un solo pez sin existir alguno en el anterior (Se debe colocar id 1)
-#y,N, Nframes = 0.1,1,1
-#Ok
-
-#situacion 1: Entran 3 peces sin existir alguno en el anterior (Se debe colocar id 1,2,3 ascendentes en y)
-#y, N, Nframes =(0.10,0.12,0.11),3,1
-#Ok
-
-#situacion 2: siguen los 3 peces su trayectoria normalmente (Se deben mantener los ids 1, 2, 3 ascendetes en y)
-#y, N, Nframes =[(0.10,0.12,0.11),(0.76,0.77,0.78)],(3,3),2
-#Ok funciona con N peces
-
-#situacion 3: Pasada la situacion 0 entran N peces (N=4)
-#y, N, Nframes =[(0.10),(0.12,0.08,0.05,0.04)],(1,4),2
 
 #Situacion Especial
 x=[(-1),(-1,-1),(-1,-1),(-1,-1,-1),(-1,-1,-1)]
@@ -46,6 +27,8 @@ pecesFrame = 0
 pezNuevo = 0
 indexId = []
 posicionDistancia = np.array([(-1,-1,-1)],  dtype=[('posicion', 'i4'),('distancia', 'f8'),('valid','i4')])
+pezDeMas = 0
+Identificador = 0
 
 def limpiadorOrdenador (Frame_arrays, ordenar):
     Arrays_no_valids = ([-1])
@@ -109,14 +92,16 @@ for i0 in range(Nframes):
                 if Anterior[i3]['y'] >= Actual[i4]['y']:
                     ActualVacio = np.delete(ActualVacio,i4)
                     pezNuevo += 1
-            else:
-                break
+                else:
+                    break
         else:
             try:
-                ActualVacio = np.delete(ActualVacio,i3)
-                #posicionDistancia = np.append(posicionDistancia, [(i3,distancia,1)], axis=0)
+                ActualVacio = np.delete(ActualVacio,0)
+                print(f'Vacio: {len(ActualVacio)}')
+                print("Borrado normal")
             except:
                 print('Error 101')
+                pezDeMas += 1
 
     #Conteo de Frame
     pecesTotales = pecesTotales + pezNuevo 
@@ -129,4 +114,5 @@ for i0 in range(Nframes):
     Actual = np.array([(-1,-1,-1,-1,-1,-1)],  dtype=[('x', 'f8'),('y', 'f8'), ('w', 'f8'), ('h', 'f8'),('id', 'i4'),('valid', 'i4')]) 
     pecesFrame = 0
     pezNuevo = 0
+    pezDeMas = 0
     
