@@ -1,3 +1,4 @@
+from re import A
 import numpy as np
 
 """
@@ -29,6 +30,9 @@ indexId = []
 posicionDistancia = np.array([(-1,-1,-1)],  dtype=[('posicion', 'i4'),('distancia', 'f8'),('valid','i4')])
 pezDeMas = 0
 Identificador = 0
+ultimoId = 0
+ultimoIdAsignador = 0
+condicion1 = False
 
 def limpiadorOrdenador (Frame_arrays, ordenar):
     Arrays_no_valids = ([-1])
@@ -74,16 +78,25 @@ for i0 in range(Nframes):
         #Salida del frame ordenado 
         Actual = limpiadorOrdenador(Actual,'y')
 
-    #Frames anteriores y actuales del momento
-    print(f'Anterior: {Anterior}')
-    print(f'Actual: {Actual}')
-
     #Condición 1
     if len(Anterior) == 0:
         pecesFrame = len(Actual)
+        condicion1 = True
+        for i5 in range(len(Actual)):
+            Actual[i5]['id'] = i5+1
+
+    #Necesitamos conocer los ids de los peces del anterior frame para partir desde el ultimo id
+    for i6 in range(len(Anterior)):
+        #Recibimos el id de cada pez anterior y lo comparamos obteniendo el mayor valor
+        if ultimoId < Anterior[i6]['id']:
+            ultimoId = Anterior[i6]['id']
+
+    print(f'ultimoID {ultimoId}')
 
     #ActualVacio para poder elminar peces del vector actual sin afectar la logica
     ActualVacio = Actual 
+    #Esto se hace para mantener el valor del ultimo Id
+    ultimoIdAsignador = ultimoId
 
     #Condicion 2
     for i3 in range(len(Anterior)):
@@ -92,16 +105,54 @@ for i0 in range(Nframes):
                 if Anterior[i3]['y'] >= Actual[i4]['y']:
                     ActualVacio = np.delete(ActualVacio,i4)
                     pezNuevo += 1
+                    ultimoId +=1
+                    ultimoIdAsignador +=1
+                    #Actual[i4]['id'] = ultimoId No lo asignamos aca porque si hay varios peces nuevos le asignara en orden inverso el id
                 else:
-                    break
+                    #En este punto para la posicion 0 del vector anterior no hay ningun pez antes
+                    #Se sigue con el procedimiento normal y se agrega aca para que se aplique al primer pez de anterior
+                    #es decir desde las siguientes corchetes se va a repetir en el else de abajo (para los demas peces)
+
+                    #{
+                    try:
+                        ActualVacio = np.delete(ActualVacio,0)
+                        print(f'Vacio: {len(ActualVacio)}')
+                        print("Borrado normal")
+                        break
+                    except:
+                        #un pez aca significa que ya salio
+                        print('Pez sale')
+                        pezDeMas += 1
+                        break
+                    #}
         else:
             try:
                 ActualVacio = np.delete(ActualVacio,0)
                 print(f'Vacio: {len(ActualVacio)}')
                 print("Borrado normal")
             except:
-                print('Error 101')
+                #un pez aca significa que ya salio
+                print('Pez sale')
                 pezDeMas += 1
+
+    #Esto con el fin de que si ya entro a la condición 1, los ids ya vienen correctamente, no sería necesario hacer esta parte del codigo
+    if condicion1 == False:
+        for i7 in range(len(Actual)):
+            #Enlazar ids
+            Actual[i7]['id'] = ultimoIdAsignador
+            ultimoIdAsignador -= 1
+
+            #Esto significa que sobraron Ids 
+            #Posibles escenarios
+            #1) Hubo un pez nuevo que no fue contado con la condicion de menor altura
+            #2) Peces del frame anterior ya salieron
+            if ultimoIdAsignador <= -1:
+                print(f"Problema con ID")
+                    
+
+    #Frames anteriores y actuales del momento
+    print(f'Anterior: {Anterior}')
+    print(f'Actual: {Actual}')
 
     #Conteo de Frame
     pecesTotales = pecesTotales + pezNuevo 
@@ -115,4 +166,9 @@ for i0 in range(Nframes):
     pecesFrame = 0
     pezNuevo = 0
     pezDeMas = 0
+    condicion1 = False
     
+
+#Estado actual
+#Se debe corregir la condicion 1 porque esta colocando los ids al reves, ya despues se corrigen, pero inicialmente estan mal, cosa que genera problemas
+#Cuando llega a 0 los peces, se debe reiniciar el ultimoId y ademas guardar ese ultimoId que teniamos en una variable para corroborar, teniendo en cuenta que cada vez que entre a la condición 1, esos peces se deben agregar a la cuenta.
