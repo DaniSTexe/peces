@@ -1,0 +1,44 @@
+239-243 Detecta dos veces un mismo pez 0.37
+334-344 Detecta dos veces un mismo pez 0.28 0.36
+514-519 Un pez sale lo deja de detectar y lo vuelve a detectar 0.44 0.77
+771-780 Detecta dos veces un mismo pez
+791-800 Detecta tres veces un mismo pez
+802-808 Detecta dos veces un mismo pez
+812-814 Deja de detectar un pez y lo vuelve a detectar
+910-914 Detecta dos veces un mismo pez
+963 Detecta un pez sin existir pez 0.38 
+
+Minima probabilidad correcta 0.64 Esto para subir el umbral, si esto sucede puede afectar a una deteccion de 0.39 que es verdadera para ello se
+plantea la posible solución [1] y la posible solución [2]
+
+Posible solución [1]
+Detectar diferentes clases
+Pez vertical cabeza-cola
+Pez vertical cola-cabeza
+Pez horizontal
+
+Posible solución [2]
+Observar como se comporta el algoritmo si deja de detectar y luego vuelve a detectar para garantizar que no sea un error
+
+Planteamiento de solución general [1]
+Realizar la validación para que entre a la condición 1 (es decir N numero de veces antes de ser validado con la c1
+ejemplo: N=3, de pasar de un frame sin peces a otro con 1 pez despues de N=3, veces que se detecte se ingresa a las condiciones normales)
+
+Planteamiento de solución general [2]
+Todos los peces deben quedar identificados, si sobra uno no asumiremos que es nuevo, sino que fue una detección mal hecha,
+para identficar en este caso usaremos distancias, asi de un frame a otro, para que sea el mismo segun su ID tiene que ser 
+el que se encuentre mas cerca en el frame siguiente, quitando asi el problema de que aparece una nueva detección en un lugar cualquiera,
+pues como no esta cerca a ningun pez pues no se tiene en cuenta, suponiendo que se encuentre cerca a un pez, pues tomara el id de este pez, pero
+la que realmente pertenece al pez quedara eliminada, asi que se sigue manteniendo el orden en el sistema, luego, 
+si un mismo pez se detecta dos veces ya no será problema para el algoritmo puesto que pasaria que uno de los dos toma el ID y el otro se elimina,
+ahora hay que analizar el caso donde el pez se deja de detectar, y luego vuelve a detectarse, como solucionar esto [?1].
+
+Planteamiento de solución general [2]
+Similar al anterior pero no se valida para entrar a la c1, simplemente durante todo el recorrido se valida con distacias 
+si sobran peces en la identificaciones estos no se tendran en cuenta pues la unica forma de ser nuevo es la c1
+
+Solución[?1]:
+Hacer el analisis saltandonos un frame y comprobando que vamos bien, es decir, vamos en el frame 1, lo comparamos con el 2,
+nos arroja que sobro un pez en identificacion, osea algo pasó, vamos a validar entonces con el frame 3, si vuelve a sobrar,
+vamos a validar con el 4, si vuelve a sobrar entonces fue una falsa detección, pero si tanto en este frame como en el frame 3,
+la cuenta da correcta, quiere decir que hubo una indetección y el pez es el mismo del frame 1.

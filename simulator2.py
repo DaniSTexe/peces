@@ -32,7 +32,6 @@ pezDeMas = 0
 Identificador = 0
 ultimoId = 0
 ultimoIdAsignador = 0
-condicion1 = False
 
 def limpiadorOrdenador (Frame_arrays, ordenar):
     Arrays_no_valids = ([-1])
@@ -78,12 +77,17 @@ for i0 in range(Nframes):
         #Salida del frame ordenado 
         Actual = limpiadorOrdenador(Actual,'y')
 
+    #ActualVacio para poder elminar peces del vector actual sin afectar la logica
+    ActualVacio = Actual 
+    #Esto se hace para mantener el valor del ultimo Id
+    ultimoIdAsignador = ultimoId
+
     #Condición 1
     if len(Anterior) == 0:
         pecesFrame = len(Actual)
-        condicion1 = True
         for i5 in range(len(Actual)):
-            Actual[i5]['id'] = i5+1
+            ultimoId +=1
+            ultimoIdAsignador +=1
 
     #Necesitamos conocer los ids de los peces del anterior frame para partir desde el ultimo id
     for i6 in range(len(Anterior)):
@@ -92,11 +96,6 @@ for i0 in range(Nframes):
             ultimoId = Anterior[i6]['id']
 
     print(f'ultimoID {ultimoId}')
-
-    #ActualVacio para poder elminar peces del vector actual sin afectar la logica
-    ActualVacio = Actual 
-    #Esto se hace para mantener el valor del ultimo Id
-    ultimoIdAsignador = ultimoId
 
     #Condicion 2
     for i3 in range(len(Anterior)):
@@ -136,18 +135,18 @@ for i0 in range(Nframes):
                 pezDeMas += 1
 
     #Esto con el fin de que si ya entro a la condición 1, los ids ya vienen correctamente, no sería necesario hacer esta parte del codigo
-    if condicion1 == False:
-        for i7 in range(len(Actual)):
-            #Enlazar ids
-            Actual[i7]['id'] = ultimoIdAsignador
-            ultimoIdAsignador -= 1
+    
+    for i7 in range(len(Actual)):
+        #Enlazar ids
+        Actual[i7]['id'] = ultimoIdAsignador
+        ultimoIdAsignador -= 1
 
-            #Esto significa que sobraron Ids 
-            #Posibles escenarios
-            #1) Hubo un pez nuevo que no fue contado con la condicion de menor altura
-            #2) Peces del frame anterior ya salieron
-            if ultimoIdAsignador <= -1:
-                print(f"Problema con ID")
+        #Esto significa que sobraron Ids 
+        #Posibles escenarios
+        #1) Hubo un pez nuevo que no fue contado con la condicion de menor altura
+        #2) Peces del frame anterior ya salieron
+        if ultimoIdAsignador <= -1:
+            print(f"Problema con ID")
                     
 
     #Frames anteriores y actuales del momento
@@ -166,9 +165,7 @@ for i0 in range(Nframes):
     pecesFrame = 0
     pezNuevo = 0
     pezDeMas = 0
-    condicion1 = False
     
 
 #Estado actual
-#Se debe corregir la condicion 1 porque esta colocando los ids al reves, ya despues se corrigen, pero inicialmente estan mal, cosa que genera problemas
 #Cuando llega a 0 los peces, se debe reiniciar el ultimoId y ademas guardar ese ultimoId que teniamos en una variable para corroborar, teniendo en cuenta que cada vez que entre a la condición 1, esos peces se deben agregar a la cuenta.

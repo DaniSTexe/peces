@@ -98,7 +98,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     Identificador = 0
     ultimoId = 0
     ultimoIdAsignador = 0
-    condicion1 = False
 
     #Funcion para eliminar los valores que son de inicialización y para ordenar el frame desde el ymayor hasta el ymenor (inferior-superior)
     def limpiadorOrdenador (Frame_arrays):
@@ -220,12 +219,17 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             print(f'Anterior: {Anterior}')
             print(f'Actual: {Actual}')
 
+            #ActualVacio para poder elminar peces del vector actual sin afectar la logica
+            ActualVacio = Actual 
+            #Esto se hace para mantener el valor del ultimo Id
+            ultimoIdAsignador = ultimoId 
+
             #Condición 1
             if len(Anterior) == 0:
                 pecesFrame = len(Actual)
-                condicion1 = True
                 for i5 in range(len(Actual)):
-                    Actual[i5]['id'] = i5+1
+                    ultimoId +=1
+                    ultimoIdAsignador +=1
 
             #Necesitamos conocer los ids de los peces del anterior frame para partir desde el ultimo id
             for i6 in range(len(Anterior)):
@@ -235,21 +239,19 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
             print(f'ultimoID {ultimoId}')
 
-            #ActualVacio para poder elminar peces del vector actual sin afectar la logica
-            ActualVacio = Actual 
-            #Esto se hace para mantener el valor del ultimo Id
-            ultimoIdAsignador = ultimoId 
-
             #Condicion 2
             for i3 in range(len(Anterior)):
                 if i3 == 0:
                     for i4 in range(len(Actual)): 
                         if Anterior[i3]['y'] >= Actual[i4]['y']:
-                            ActualVacio = np.delete(ActualVacio,i4)
-                            pezNuevo += 1
-                            ultimoId +=1
-                            ultimoIdAsignador +=1
-                            #Actual[i4]['id'] = ultimoId No lo asignamos aca porque si hay varios peces nuevos le asignara en orden inverso el id
+                            try:
+                                ActualVacio = np.delete(ActualVacio,i4)
+                                pezNuevo += 1
+                                ultimoId +=1
+                                ultimoIdAsignador +=1
+                                #Actual[i4]['id'] = ultimoId No lo asignamos aca porque si hay varios peces nuevos le asignara en orden inverso el id
+                            except:
+                                print("No se pudo borrar el pez")
                         else:
                             #En este punto para la posicion 0 del vector anterior no hay ningun pez antes
                             #Se sigue con el procedimiento normal y se agrega aca para que se aplique al primer pez de anterior
@@ -278,18 +280,17 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                         pezDeMas += 1
 
             #Esto con el fin de que si ya entro a la condición 1, los ids ya vienen correctamente, no sería necesario hacer esta parte del codigo
-            if condicion1 == False:
-                for i7 in range(len(Actual)):
-                    #Enlazar ids
-                    Actual[i7]['id'] = ultimoIdAsignador
-                    ultimoIdAsignador -= 1
+            for i7 in range(len(Actual)):
+                #Enlazar ids
+                Actual[i7]['id'] = ultimoIdAsignador
+                ultimoIdAsignador -= 1
 
-                    #Esto significa que sobraron Ids 
-                    #Posibles escenarios
-                    #1) Hubo un pez nuevo que no fue contado con la condicion de menor altura
-                    #2) Peces del frame anterior ya salieron
-                    if ultimoIdAsignador <= -1:
-                        print(f"Problema con ID")
+                #Esto significa que sobraron Ids 
+                #Posibles escenarios
+                #1) Hubo un pez nuevo que no fue contado con la condicion de menor altura
+                #2) Peces del frame anterior ya salieron
+                if ultimoIdAsignador <= -1:
+                    print(f"Problema con ID")
                             
 
             #Frames anteriores y actuales del momento
@@ -308,7 +309,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             pecesFrame = 0
             pezNuevo = 0
             pezDeMas = 0
-            condicion1 = False
 
             # Print time (inference-only)
             LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
@@ -350,8 +350,8 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / './weights/circulo.pt', help='model path(s)')
-    parser.add_argument('--source', type=str, default=ROOT / './Inputs/61.mp4', help='file/dir/URL/glob, 0 for webcam')
+    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / './weights/colas1.pt', help='model path(s)')
+    parser.add_argument('--source', type=str, default=ROOT / './Inputs/Conteo_32', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
