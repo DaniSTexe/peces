@@ -32,6 +32,8 @@ pezDeMas = 0
 Identificador = 0
 ultimoId = 0
 ultimoIdAsignador = 0
+conteo2 = 0
+idEncontrado=False
 
 def limpiadorOrdenador (Frame_arrays, ordenar):
     Arrays_no_valids = ([-1])
@@ -148,6 +150,23 @@ for i0 in range(Nframes):
         if ultimoIdAsignador <= -1:
             print(f"Problema con ID")
                     
+    #Forma 2 de contar
+    for i8 in range(ultimoId):
+        try:
+            #Encontramos el Id en el frame anterior y el actual
+            idFrameAnterior = np.where(Anterior['id']== i8+1)
+            idFrameActual = np.where(Actual['id']== i8+1)
+            idEncontrado = True
+        except:
+            print("ID no encontrado") 
+         
+        if idEncontrado:
+            idFrameAnterior = (Anterior[idFrameAnterior]['y'])
+            idFrameActual = (Actual[idFrameActual]['y'])     
+
+            if (idFrameAnterior.size > 0) and (idFrameActual.size > 0):
+                if (idFrameAnterior < 0.5) and (idFrameActual > 0.5):
+                    conteo2 += 1
 
     #Frames anteriores y actuales del momento
     print(f'Anterior: {Anterior}')
@@ -158,6 +177,8 @@ for i0 in range(Nframes):
     pecesTotales = pecesTotales + pecesFrame
     print(f'Conteo: {pecesTotales}')
     print(f'----------------------')
+    print(f'El conteo 2 es: {conteo2}')
+    print(f'----------------------')
 
     #Reset
     Anterior = Actual 
@@ -165,7 +186,10 @@ for i0 in range(Nframes):
     pecesFrame = 0
     pezNuevo = 0
     pezDeMas = 0
+    idEncontrado=False
     
 
 #Estado actual
 #Cuando llega a 0 los peces, se debe reiniciar el ultimoId y ademas guardar ese ultimoId que teniamos en una variable para corroborar, teniendo en cuenta que cada vez que entre a la condición 1, esos peces se deben agregar a la cuenta.
+#no esta funcionando pero porque esta simulacion no es realista al asumir los saltos tan grandes de los peces, se debe o ajustar la simulación o 
+    #ajustar los parametros para simular, o probrar directamente en el detect
